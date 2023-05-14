@@ -1,10 +1,16 @@
-from dotenv import load_dotenv
-import os
+# app/api/core/config.py
+from pydantic import BaseSettings
 
-load_dotenv()  # take environment variables from .env.
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")
-AUTH0_CLIENT_ID = os.getenv("AUTH0_CLIENT_ID")
-AUTH0_CLIENT_SECRET = os.getenv("AUTH0_CLIENT_SECRET")
+class Settings(BaseSettings):
+    SUPABASE_URL: str
+    SUPABASE_SECRET_KEY: str
+    AUTH0_DOMAIN: str
+    AUTH0_CLIENT_ID: str
+    AUTH0_CLIENT_SECRET: str
+
+    class Config:
+        env_file = ".env"
+
+
+settings = Settings()

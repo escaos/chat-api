@@ -1,17 +1,35 @@
-# app/api/v1/conversations.py
 from fastapi import APIRouter
-from app.db.session import supabase
+from app.api.db.session import supabase
 
 router = APIRouter()
 
 
-async def read_conversations(
-    user_id: int,
-):  # Removed the router decorator, this is now a helper function
+@router.get("/conversations/")
+def read_conversations_by_user(user_id: int):
+    # Query conversations_users table
     response = (
-        await supabase.table("conversations_users")
-        .select()
-        .filter("user_id", eq=user_id)
+        supabase.table("user_conversations")
+        .select("conversations(*)")
+        .eq("user_id", str(user_id))
+        .order("updated_at", ascending=False)
         .execute()
     )
-    return response
+
+    result = [item["conversations"] for item in response["data"]]
+
+    return result
+
+
+@router.get("/conversations/{conversation_id}")
+def read_conversation_by_id(user_id: int, conversation_id: int):
+    response = (
+        supabase.table("user_conversations")
+        .select("conversations(*)")
+        .eq("user_id", str(user_id))
+        .eq("conversation_id", str(conversation_id))
+        .execute()
+    )
+
+    result = [item["conversations"] for item in response["data"]]
+
+    return result
