@@ -1,4 +1,5 @@
 # app/api/core/config.py
+from fastapi import Depends
 from pydantic import BaseSettings
 
 
@@ -8,6 +9,8 @@ class Settings(BaseSettings):
     AUTH0_DOMAIN: str
     AUTH0_CLIENT_ID: str
     AUTH0_CLIENT_SECRET: str
+    ALGORITHMS: str = "RS256"
+    API_AUDIENCE: str
 
     class Config:
         env_file = ".env"

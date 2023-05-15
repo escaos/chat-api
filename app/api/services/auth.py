@@ -1,35 +1,17 @@
-from fastapi import HTTPException, Security
-from fastapi.security import OAuth2PasswordBearer, SecurityScopes
-from jose import JWTError, jwt
-from app.api.core.config import settings
-from typing import Optional
+# app/api/services/auth.py
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from .utils import VerifyToken
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/login", scopes={"me": "Read information about the current user."}
-)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def decode_token(token: str):
-    try:
-        payload = jwt.decode(token, settings.AUTH0_CLIENT_SECRET, algorithms=["HS256"])
-        return payload
-    except JWTError:
-        raise HTTPException(status_code=400, detail="Invalid authentication token")
-
-
-def get_current_user(
-    security_scopes: SecurityScopes, token: str = Security(oauth2_scheme)
-):
-    if security_scopes.scopes:
-        authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
-    else:
-        authenticate_value = f"Bearer"
-
-    payload = decode_token(token)
-    if payload.get("scope") and security_scopes.scope_str not in payload["scope"]:
+def get_current_user_id(token: str = Depends(oauth2_scheme)):
+    token_verifier = VerifyToken(token)
+    payload = token_verifier.verify()
+    if "status" in payload and payload["status"] == "error":
         raise HTTPException(
-            status_code=403,
-            detail="Not enough permissions",
-            headers={"WWW-Authenticate": authenticate_value},
+            status_code=payload["status_code"],
+            detail=payload["msg"],
         )
-    return payload
+    return payload.get("sub")  # Assuming 'sub' in your payload is the user ID

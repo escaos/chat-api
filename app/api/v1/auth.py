@@ -14,26 +14,6 @@ class UserBase(BaseModel):
     password: str
 
 
-def assign_role_to_user(
-    auth0_domain: str, auth0_token: str, user_id: str, role_id: str
-):
-    conn = http.client.HTTPSConnection(auth0_domain)
-    url = f"/api/v2/users/{user_id}/roles"
-    headers = {
-        "Authorization": f"Bearer {auth0_token}",
-        "Content-Type": "application/json",
-    }
-    payload = json.dumps({"roles": [role_id]})
-    conn.request("POST", url, body=payload, headers=headers)
-    res = conn.getresponse()
-    data = res.read()
-
-    if res.status != 200:
-        print("Failed to assign role:", data)
-        # handle error
-        raise Exception(f"Failed to assign role: {data}")
-
-
 @router.post("/signup", tags=["authentication"])
 async def signup(new_user: UserBase):
     # Fetch Management API Token
@@ -65,34 +45,10 @@ async def signup(new_user: UserBase):
     try:
         auth0_user = auth0.users.create(body=user_info)
 
-        auth0.users.add_roles(auth0_user["user_id"], ["chat_user"])
-        # auth0.users.assign_user_roles(
-        #     auth0_user["user_id"], {"roles": [chat_user_role_id]}
-        # )
-
     except Exception as e:
         print("Exception = ", e)
         # Handle exceptions raised when creating the user
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-    auth0_user = {
-        "created_at": "2023-05-14T18:32:46.152Z",
-        "email": "test@edisonsanchez.com",
-        "email_verified": False,
-        "identities": [
-            {
-                "connection": "Username-Password-Authentication",
-                "user_id": "6461294e78b6ce3bf40d823f",
-                "provider": "auth0",
-                "isSocial": False,
-            }
-        ],
-        "name": "test@edisonsanchez.com",
-        "nickname": "test",
-        "picture": "https://s.gravatar.com/avatar/903ba20e9fc1c8c032f98953f7c22b57?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fte.png",
-        "updated_at": "2023-05-14T18:32:46.152Z",
-        "user_id": "auth0|6461294e78b6ce3bf40d823f",
-    }
 
     identity = auth0_user["identities"][0]
     user = {
